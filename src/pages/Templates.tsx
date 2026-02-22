@@ -1028,6 +1028,18 @@ Thank you for your business!`,
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Product inventory search states for delivery note
+  const [deliveryNoteProductItemsMap, setDeliveryNoteProductItemsMap] = useState<Map<string, { rate: number, unit: string }>>(new Map());
+  const [deliveryNoteProductDescriptions, setDeliveryNoteProductDescriptions] = useState<string[]>([]);
+  
+  // Product inventory states for GRN
+  const [grnProductItems, setGrnProductItems] = useState<Product[]>([]);
+  const [grnProductDescriptions, setGrnProductDescriptions] = useState<string[]>([]);
+  const [showGrnDropdown, setShowGrnDropdown] = useState<boolean>(false);
+  const [showDeliveryNoteDropdown, setShowDeliveryNoteDropdown] = useState<boolean>(false);
+  const [reportName, setReportName] = useState<string>("");
+  const [settlementReference, setSettlementReference] = useState<string>("");
+
   // Load outlets on component mount
   useEffect(() => {
     const loadOutlets = async () => {
@@ -1048,6 +1060,23 @@ Thank you for your business!`,
     loadOutlets();
   }, []);
 
+  // Load products for GRN dropdown on component mount
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const loadedProducts = await getProducts();
+        setGrnProductItems(loadedProducts);
+        setGrnProductDescriptions(loadedProducts.map(p => p.name));
+      } catch (error) {
+        console.error('Error loading products for GRN:', error);
+        setGrnProductItems([]);
+        setGrnProductDescriptions([]);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1059,13 +1088,19 @@ Thank you for your business!`,
           !commandElement.contains(target)) {
         setShowOutletDropdown(false);
       }
+      
+      // Check if the click is outside the GRN dropdown
+      const grnDropdownElement = target.closest('.relative');
+      if (showGrnDropdown && !grnDropdownElement) {
+        setShowGrnDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showOutletDropdown]);
+  }, [showOutletDropdown, showGrnDropdown]);
 
   // Effect to update savedDeliveryNotes when localStorage changes
   useEffect(() => {
@@ -1134,12 +1169,6 @@ Thank you for your business!`,
   }, []);
 
   const [deliveryNoteName, setDeliveryNoteName] = useState<string>("");
-  // Product inventory search states for delivery note
-  const [deliveryNoteProductItemsMap, setDeliveryNoteProductItemsMap] = useState<Map<string, { rate: number, unit: string }>>(new Map());
-  const [deliveryNoteProductDescriptions, setDeliveryNoteProductDescriptions] = useState<string[]>([]);
-  const [showDeliveryNoteDropdown, setShowDeliveryNoteDropdown] = useState<boolean>(false);
-  const [reportName, setReportName] = useState<string>("");
-  const [settlementReference, setSettlementReference] = useState<string>("");
     
   // Function to generate a unique customer ID
   const generateCustomerId = () => {
@@ -4100,6 +4129,25 @@ Thank you for your business!`,
     }));
     setFilteredOutlets([]);
     setShowOutletDropdown(false);
+  };
+
+  // Handle product selection from GRN dropdown
+  const handleGrnProductSelect = (productName: string, itemId: string) => {
+    const selectedProduct = grnProductItems.find(p => p.name === productName);
+    if (selectedProduct) {
+      setGrnData(prev => ({
+        ...prev,
+        items: prev.items.map(item => 
+          item.id === itemId ? { 
+            ...item, 
+            description: productName,
+            unit: selectedProduct.unit_of_measure || item.unit,
+            unitCost: selectedProduct.cost_price || item.unitCost
+          } : item
+        )
+      }));
+    }
+    setShowGrnDropdown(false);
   };
 
   // Filter outlets based on customer name input
@@ -9333,17 +9381,48 @@ Thank you for your business!`,
                                     <tbody>
                                       {supplierItems.map((item) => (
                                         <tr key={`${item.id}-${supplierIndex}`}>
-                                          <td className="border border-gray-300 p-2">
-                                            <Input
-                                              value={item.description}
-                                              onChange={(e) => setGrnData(prev => ({
-                                                ...prev,
-                                                items: prev.items.map(i => 
-                                                  i.id === item.id ? { ...i, description: e.target.value } : i
-                                                )
-                                              }))}
-                                              className="p-1 h-8 text-sm w-full"
-                                            />
+                                          <td className="border border-gray-300 p-2 relative">
+                                            <div className="relative">
+                                              <Input
+                                                value={item.description}
+                                                onChange={(e) => {
+                                                  setGrnData(prev => ({
+                                                    ...prev,
+                                                    items: prev.items.map(i => 
+                                                      i.id === item.id ? { ...i, description: e.target.value } : i
+                                                    )
+                                                  }));
+                                                  setShowGrnDropdown(true);
+                                                }}
+                                                onFocus={() => setShowGrnDropdown(true)}
+                                                onBlur={() => {
+                                                  // Delay hiding the dropdown to allow click events to register
+                                                  setTimeout(() => setShowGrnDropdown(false), 150);
+                                                }}
+                                                className="p-1 h-8 text-sm w-full"
+                                                placeholder="Select or enter product..."
+                                              />
+                                              {showGrnDropdown && grnProductDescriptions.length > 0 && (
+                                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                                  {grnProductDescriptions
+                                                    .filter(desc => 
+                                                      item.description === "" || desc.toLowerCase().includes(item.description.toLowerCase())
+                                                    )
+                                                    .map((desc, idx) => (
+                                                      <div
+                                                        key={idx}
+                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                        onMouseDown={() => {
+                                                          handleGrnProductSelect(desc, item.id);
+                                                        }}
+                                                      >
+                                                        {desc}
+                                                      </div>
+                                                    ))
+                                                  }
+                                                </div>
+                                              )}
+                                            </div>
                                           </td>
                                           <td className="border border-gray-300 p-2">
                                             <Input
