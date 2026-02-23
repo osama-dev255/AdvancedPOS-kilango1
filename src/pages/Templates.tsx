@@ -1061,40 +1061,6 @@ Thank you for your business!`,
     loadOutlets();
   }, []);
 
-  // Effect to handle delivery note dropdown positioning
-  useEffect(() => {
-    if (showDeliveryNoteDropdown) {
-      const updateDropdownPosition = () => {
-        const activeInput = document.activeElement;
-        if (activeInput instanceof HTMLInputElement) {
-          const rect = activeInput.getBoundingClientRect();
-          const dropdowns = document.querySelectorAll('[id^="delivery-note-dropdown-"]');
-          dropdowns.forEach(dropdown => {
-            const element = dropdown as HTMLElement;
-            element.style.position = 'fixed';
-            element.style.top = `${rect.bottom + window.scrollY}px`;
-            element.style.left = `${rect.left + window.scrollX}px`;
-            element.style.minWidth = `${Math.max(rect.width, 400)}px`;
-            element.style.zIndex = '1000';
-          });
-        }
-      };
-      
-      // Update position immediately and on scroll/resize
-      updateDropdownPosition();
-      const scrollHandler = () => updateDropdownPosition();
-      const resizeHandler = () => updateDropdownPosition();
-      
-      window.addEventListener('scroll', scrollHandler, true);
-      window.addEventListener('resize', resizeHandler);
-      
-      return () => {
-        window.removeEventListener('scroll', scrollHandler, true);
-        window.removeEventListener('resize', resizeHandler);
-      };
-    }
-  }, [showDeliveryNoteDropdown]);
-
   // Load products for GRN dropdown on component mount
   useEffect(() => {
     const loadProducts = async () => {
@@ -5429,6 +5395,57 @@ Thank you for your business!`,
   const [invoiceProductItemsMap, setInvoiceProductItemsMap] = useState<Map<string, { rate: number, unit: string }>>(new Map());
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   
+  // Effect to handle dropdown positioning for both delivery note and invoice
+  useEffect(() => {
+    if (showDeliveryNoteDropdown || showDropdown) {
+      const updateDropdownPosition = () => {
+        const activeInput = document.activeElement;
+        if (activeInput instanceof HTMLInputElement) {
+          const rect = activeInput.getBoundingClientRect();
+          
+          // Handle delivery note dropdowns
+          if (showDeliveryNoteDropdown) {
+            const deliveryDropdowns = document.querySelectorAll('[id^="delivery-note-dropdown-"]');
+            deliveryDropdowns.forEach(dropdown => {
+              const element = dropdown as HTMLElement;
+              element.style.position = 'fixed';
+              element.style.top = `${rect.bottom + window.scrollY}px`;
+              element.style.left = `${rect.left + window.scrollX}px`;
+              element.style.minWidth = `${Math.max(rect.width, 400)}px`;
+              element.style.zIndex = '1000';
+            });
+          }
+          
+          // Handle invoice dropdowns
+          if (showDropdown) {
+            const invoiceDropdowns = document.querySelectorAll('[id^="invoice-dropdown-"]');
+            invoiceDropdowns.forEach(dropdown => {
+              const element = dropdown as HTMLElement;
+              element.style.position = 'fixed';
+              element.style.top = `${rect.bottom + window.scrollY}px`;
+              element.style.left = `${rect.left + window.scrollX}px`;
+              element.style.minWidth = `${Math.max(rect.width, 400)}px`;
+              element.style.zIndex = '1000';
+            });
+          }
+        }
+      };
+      
+      // Update position immediately and on scroll/resize
+      updateDropdownPosition();
+      const scrollHandler = () => updateDropdownPosition();
+      const resizeHandler = () => updateDropdownPosition();
+      
+      window.addEventListener('scroll', scrollHandler, true);
+      window.addEventListener('resize', resizeHandler);
+      
+      return () => {
+        window.removeEventListener('scroll', scrollHandler, true);
+        window.removeEventListener('resize', resizeHandler);
+      };
+    }
+  }, [showDeliveryNoteDropdown, showDropdown]);
+  
   // Load GRN descriptions and items map on component mount
   useEffect(() => {
     const loadGRNData = async () => {
@@ -7839,7 +7856,7 @@ Thank you for your business!`,
                         {/* Items Table */}
                         <div>
                           <div className="font-bold mb-2">SERVICES RENDERED:</div>
-                          <div className="overflow-x-auto">
+                          <div className="overflow-x-auto relative">
                             <table className="w-full border-collapse border border-gray-300 text-sm">
                               <thead>
                                 <tr className="bg-gray-100">
@@ -7858,7 +7875,7 @@ Thank you for your business!`,
                                     <td className="border border-gray-300 p-2">
                                       {String(index + 1).padStart(3, '0')}
                                     </td>
-                                    <td className="border border-gray-300 p-2">
+                                    <td className="border border-gray-300 p-2 relative">
                                       <div className="relative">
                                         <Input
                                           value={item.description}
@@ -7880,7 +7897,11 @@ Thank you for your business!`,
                                           placeholder="Select or enter description..."
                                         />
                                         {invoiceProductDescriptions.length > 0 && showDropdown && (
-                                          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                          <div 
+                                            id={`invoice-dropdown-${item.id}`}
+                                            className="fixed z-50 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                                            style={{ minWidth: '400px' }}
+                                          >
                                             {invoiceProductDescriptions
                                               .filter(desc => 
                                                 item.description === "" || desc.toLowerCase().includes(item.description.toLowerCase())
