@@ -16,13 +16,15 @@ import {
   Truck, 
   Wallet,
   Calendar,
-  FileSpreadsheet
+  FileSpreadsheet,
+  TruckIcon
 } from "lucide-react";
 import { ExportUtils } from '@/utils/exportUtils';
 import { PrintUtils } from '@/utils/printUtils';
 import { ExcelUtils } from '@/utils/excelUtils';
 import { getSavedInvoices } from "@/utils/invoiceUtils";
 import { getSavedSettlements } from "@/utils/customerSettlementUtils";
+import { getSavedDeliveries } from '@/utils/deliveryUtils';
 import { formatCurrency } from '@/lib/currency';
 
 interface ReportsProps {
@@ -67,8 +69,10 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
   const [reportType, setReportType] = useState("sales");
   const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
   const [savedSettlements, setSavedSettlements] = useState<any[]>([]);
+  const [savedDeliveries, setSavedDeliveries] = useState<any[]>([]);
   const [loadingSavedInvoices, setLoadingSavedInvoices] = useState(false);
   const [loadingSavedSettlements, setLoadingSavedSettlements] = useState(false);
+  const [loadingSavedDeliveries, setLoadingSavedDeliveries] = useState(false);
 
   // Helper function to format dates
   const formatDate = (dateValue: string | Date | undefined): string => {
@@ -149,7 +153,7 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
     return data.filter(item => isDateInRange(item[dateField]));
   };
 
-  // Load saved invoices when report type is changed to saved-invoices
+  // Load saved data when report type is changed
   useEffect(() => {
     if (reportType === "saved-invoices") {
       setLoadingSavedInvoices(true);
@@ -181,12 +185,29 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
       };
       
       loadSettlements();
+    } else if (reportType === "saved-deliveries") {
+      setLoadingSavedDeliveries(true);
+      const loadDeliveries = async () => {
+        try {
+          const deliveries = await getSavedDeliveries();
+          setSavedDeliveries(deliveries);
+        } catch (error) {
+          console.error('Error loading saved deliveries:', error);
+          setSavedDeliveries([]);
+        } finally {
+          setLoadingSavedDeliveries(false);
+        }
+      };
+      
+      loadDeliveries();
     } else {
       // Clear saved data when switching away from these reports
       setSavedInvoices([]);
       setLoadingSavedInvoices(false);
       setSavedSettlements([]);
       setLoadingSavedSettlements(false);
+      setSavedDeliveries([]);
+      setLoadingSavedDeliveries(false);
     }
   }, [reportType]);
 
@@ -237,6 +258,12 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
         if (format === "csv") ExportUtils.exportToCSV(filteredSavedSettlements, filename);
         else if (format === "excel") ExcelUtils.exportToExcel(filteredSavedSettlements, filename);
         else if (format === "pdf") ExportUtils.exportToPDF(filteredSavedSettlements, filename, "Saved Customer Settlements Report");
+        break;
+      case "saved-deliveries":
+        const filteredSavedDeliveries = filterDataByDateRange(savedDeliveries, 'date');
+        if (format === "csv") ExportUtils.exportToCSV(filteredSavedDeliveries, filename);
+        else if (format === "excel") ExcelUtils.exportToExcel(filteredSavedDeliveries, filename);
+        else if (format === "pdf") ExportUtils.exportToPDF(filteredSavedDeliveries, filename, "Saved Deliveries Report");
         break;
     }
   };
@@ -362,6 +389,24 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
             }))
           };
           break;
+        case "saved-deliveries":
+          const filteredSavedDeliveries = filterDataByDateRange(savedDeliveries, 'date');
+          reportData = {
+            title: "Saved Deliveries Report",
+            period: `${dateRange} (${new Date().toLocaleDateString()})`,
+            data: filteredSavedDeliveries.map((delivery: any) => ({
+              deliveryNoteNumber: delivery.deliveryNoteNumber || 'N/A',
+              date: formatDate(delivery.date),
+              customer: delivery.customer || 'N/A',
+              items: delivery.items || delivery.itemsList?.length || 0,
+              total: formatCurrency(delivery.total || 0),
+              totalRaw: delivery.total || 0, // Raw value for calculations
+              vehicle: delivery.vehicle || 'N/A',
+              driver: delivery.driver || 'N/A',
+              status: delivery.status || 'N/A'
+            }))
+          };
+          break;
       }
         
       // Validate that we have data to print
@@ -393,6 +438,7 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
       case "sales": return "Sales Report";
       case "saved-invoices": return "Saved Invoices Report";
       case "saved-customer-settlements": return "Saved Customer Settlements Report";
+      case "saved-deliveries": return "Saved Deliveries Report";
       default: return "Sales Report";
     }
   };
@@ -823,6 +869,12 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4" />
                           Saved Customer Settlements Report
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="saved-deliveries">
+                        <div className="flex items-center gap-2">
+                          <TruckIcon className="h-4 w-4" />
+                          Saved Deliveries Report
                         </div>
                       </SelectItem>
                     </SelectContent>
