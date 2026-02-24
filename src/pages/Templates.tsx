@@ -135,7 +135,7 @@ const initialDeliveryNoteData: DeliveryNoteData = {
   customerPhone: "+1234567890",
   customerEmail: "customer@example.com",
   deliveryNoteNumber: "DN-001",
-  date: "11/30/2025",
+  date: "2026-02-24", // Will be updated to current date when preview tab is accessed
   deliveryDate: "",
   vehicle: "",
   driver: "",
@@ -2165,19 +2165,20 @@ Thank you for your business!`,
     return `DN-${newNumber}`;
   };
   
-  // Generate delivery note number automatically
+  // Generate delivery note number and set current date automatically
   useEffect(() => {
-    if (activeTab === "preview" && !deliveryNoteName) {
+    if (activeTab === "preview") {
       const deliveryNoteNumber = getNextDeliveryNoteNumber();
       setDeliveryNoteName(deliveryNoteNumber);
       
-      // Also update the delivery note number in the data
+      // Also update the delivery note number and date in the data
       setDeliveryNoteData(prev => ({
         ...prev,
-        deliveryNoteNumber: deliveryNoteNumber
+        deliveryNoteNumber: deliveryNoteNumber,
+        date: new Date().toISOString().split('T')[0] // Set to current date in YYYY-MM-DD format
       }));
     }
-  }, [activeTab, deliveryNoteName]);
+  }, [activeTab]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
