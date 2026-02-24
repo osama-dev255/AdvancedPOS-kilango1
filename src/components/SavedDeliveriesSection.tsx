@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Truck, Download, Printer, Eye } from "lucide-react";
+import { Search, Truck, Download, Printer, Eye, Calendar } from "lucide-react";
 import { SavedDeliveriesCard } from "./SavedDeliveriesCard";
 import { getSavedDeliveries, deleteDelivery, DeliveryData } from "@/utils/deliveryUtils";
 import { PrintUtils } from "@/utils/printUtils";
@@ -18,6 +18,7 @@ interface SavedDeliveriesSectionProps {
 export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeliveriesSectionProps) => {
   const [deliveries, setDeliveries] = useState<DeliveryData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateSearchTerm, setDateSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryData | null>(null);
 
@@ -46,12 +47,36 @@ export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeli
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Filter deliveries based on search term
-  const filteredDeliveries = deliveries.filter(delivery => 
-    delivery.deliveryNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    delivery.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    delivery.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter deliveries based on search term and date
+  const filteredDeliveries = deliveries.filter(delivery => {
+    // Text search (delivery note number, customer, ID)
+    const matchesText = 
+      delivery.deliveryNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      delivery.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      delivery.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Date search
+    let matchesDate = true;
+    if (dateSearchTerm) {
+      try {
+        // Parse the delivery date
+        const deliveryDate = new Date(delivery.date);
+        // Parse the search date (supporting various formats)
+        const searchDate = new Date(dateSearchTerm);
+        
+        // Check if dates match (same day)
+        matchesDate = 
+          deliveryDate.getDate() === searchDate.getDate() &&
+          deliveryDate.getMonth() === searchDate.getMonth() &&
+          deliveryDate.getFullYear() === searchDate.getFullYear();
+      } catch (error) {
+        // If date parsing fails, don't filter by date
+        matchesDate = true;
+      }
+    }
+    
+    return matchesText && matchesDate;
+  });
 
   const handleDeleteDelivery = (deliveryId: string) => {
     try {
@@ -156,14 +181,24 @@ export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeli
                     View and manage your saved delivery notes from completed transactions
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search deliveries by number, customer..."
+                      placeholder="Search by delivery note number, customer name..."
                       className="pl-10 py-5 text-responsive-base w-64"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      placeholder="Search by date..."
+                      className="pl-10 py-5 text-responsive-base w-48"
+                      value={dateSearchTerm}
+                      onChange={(e) => setDateSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
@@ -179,7 +214,7 @@ export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeli
                 <Truck className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Saved Deliveries</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm ? "No deliveries match your search." : "You haven't saved any deliveries yet."}
+                  {searchTerm || dateSearchTerm ? "No deliveries match your search criteria." : "You haven't saved any deliveries yet."}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Deliveries are automatically saved when you complete a delivery note in the Templates section.
