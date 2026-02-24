@@ -17,7 +17,9 @@ import {
   Wallet,
   Calendar,
   FileSpreadsheet,
-  TruckIcon
+  TruckIcon,
+  AlertTriangle,
+  TrendingUp
 } from "lucide-react";
 import { ExportUtils } from '@/utils/exportUtils';
 import { PrintUtils } from '@/utils/printUtils';
@@ -25,6 +27,7 @@ import { ExcelUtils } from '@/utils/excelUtils';
 import { getSavedInvoices } from "@/utils/invoiceUtils";
 import { getSavedSettlements } from "@/utils/customerSettlementUtils";
 import { getSavedDeliveries } from '@/utils/deliveryUtils';
+import { getProducts, getInventoryStats } from '@/services/databaseService';
 import { formatCurrency } from '@/lib/currency';
 
 interface ReportsProps {
@@ -70,9 +73,17 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
   const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
   const [savedSettlements, setSavedSettlements] = useState<any[]>([]);
   const [savedDeliveries, setSavedDeliveries] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [inventoryStats, setInventoryStats] = useState({
+    totalProducts: 0,
+    totalValue: 0,
+    lowStockItems: 0,
+    outOfStockItems: 0
+  });
   const [loadingSavedInvoices, setLoadingSavedInvoices] = useState(false);
   const [loadingSavedSettlements, setLoadingSavedSettlements] = useState(false);
   const [loadingSavedDeliveries, setLoadingSavedDeliveries] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   // Helper function to format dates
   const formatDate = (dateValue: string | Date | undefined): string => {
@@ -200,6 +211,32 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
       };
       
       loadDeliveries();
+    } else if (reportType === "inventory") {
+      setLoadingProducts(true);
+      const loadInventoryData = async () => {
+        try {
+          // Load products
+          const fetchedProducts = await getProducts();
+          setProducts(fetchedProducts);
+          
+          // Load inventory statistics
+          const stats = await getInventoryStats();
+          setInventoryStats(stats);
+        } catch (error) {
+          console.error('Error loading inventory data:', error);
+          setProducts([]);
+          setInventoryStats({
+            totalProducts: 0,
+            totalValue: 0,
+            lowStockItems: 0,
+            outOfStockItems: 0
+          });
+        } finally {
+          setLoadingProducts(false);
+        }
+      };
+      
+      loadInventoryData();
     } else {
       // Clear saved data when switching away from these reports
       setSavedInvoices([]);
@@ -208,6 +245,14 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
       setLoadingSavedSettlements(false);
       setSavedDeliveries([]);
       setLoadingSavedDeliveries(false);
+      setProducts([]);
+      setInventoryStats({
+        totalProducts: 0,
+        totalValue: 0,
+        lowStockItems: 0,
+        outOfStockItems: 0
+      });
+      setLoadingProducts(false);
     }
   }, [reportType]);
 
@@ -218,9 +263,24 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
     switch (reportType) {
       case "inventory":
         // Inventory doesn't have dates, export all data
-        if (format === "csv") ExportUtils.exportToCSV(mockProducts, filename);
-        else if (format === "excel") ExcelUtils.exportToExcel(mockProducts, filename);
-        else if (format === "pdf") ExportUtils.exportToPDF(mockProducts, filename, 'Inventory Report');
+        const inventoryExportData = products.map((product: any) => ({
+          productName: product.name,
+          category: product.category_id || 'N/A',
+          sku: product.sku || 'N/A',
+          barcode: product.barcode || 'N/A',
+          currentStock: product.stock_quantity,
+          minStockLevel: product.min_stock_level || 0,
+          maxStockLevel: product.max_stock_level || 0,
+          unitOfMeasure: product.unit_of_measure || 'piece',
+          costPrice: product.cost_price,
+          sellingPrice: product.selling_price,
+          wholesalePrice: product.wholesale_price || 0,
+          totalValue: product.selling_price * product.stock_quantity,
+          status: product.is_active ? 'Active' : 'Inactive'
+        }));
+        if (format === "csv") ExportUtils.exportToCSV(inventoryExportData, filename);
+        else if (format === "excel") ExcelUtils.exportToExcel(inventoryExportData, filename);
+        else if (format === "pdf") ExportUtils.exportToPDF(inventoryExportData, filename, 'Inventory Report');
         break;
       case "customers":
         // Customers don't have dates, export all data
@@ -276,17 +336,30 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
       switch (reportType) {
         case "inventory":
           // Inventory doesn't have dates, print all data
+          const inventoryPrintData = products.map((product: any) => ({
+            productName: product.name,
+            category: product.category_id || 'N/A',
+            sku: product.sku || 'N/A',
+            barcode: product.barcode || 'N/A',
+            currentStock: product.stock_quantity,
+            minStockLevel: product.min_stock_level || 0,
+            unitOfMeasure: product.unit_of_measure || 'piece',
+            costPrice: formatCurrency(product.cost_price),
+            sellingPrice: formatCurrency(product.selling_price),
+            wholesalePrice: formatCurrency(product.wholesale_price || 0),
+            totalValue: formatCurrency(product.selling_price * product.stock_quantity),
+            status: product.is_active ? 'Active' : 'Inactive'
+          }));
           reportData = {
             title: "Inventory Report",
             period: `As of ${new Date().toLocaleDateString()}`,
-            data: mockProducts.map((product: any) => ({
-              productName: product.name,
-              category: product.category,
-              price: formatCurrency(product.price),
-              cost: formatCurrency(product.cost),
-              stock: product.stock,
-              barcode: product.barcode
-            }))
+            data: inventoryPrintData,
+            summary: {
+              totalProducts: inventoryStats.totalProducts,
+              totalValue: formatCurrency(inventoryStats.totalValue),
+              lowStockItems: inventoryStats.lowStockItems,
+              outOfStockItems: inventoryStats.outOfStockItems
+            }
           };
           break;
         case "customers":
@@ -447,29 +520,152 @@ export const Reports = ({ username, onBack, onLogout }: ReportsProps) => {
   const renderReportPreview = () => {
     switch (reportType) {
       case "inventory":
-        // Inventory doesn't typically have dates, so show all data
+        if (loadingProducts) {
+          return (
+            <div className="flex justify-center items-center h-64">
+              <p>Loading inventory data...</p>
+            </div>
+          );
+        }
+        
+        if (products.length === 0) {
+          return (
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Inventory Data Found</h3>
+              <p className="text-muted-foreground mb-4">
+                No products found in the inventory.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Add products to your inventory to generate reports.
+              </p>
+            </div>
+          );
+        }
+        
+        // Calculate additional statistics
+        const totalInventoryValue = products.reduce((sum, product) => sum + (product.selling_price * product.stock_quantity), 0);
+        const totalCostValue = products.reduce((sum, product) => sum + (product.cost_price * product.stock_quantity), 0);
+        const potentialProfit = totalInventoryValue - totalCostValue;
+        
         return (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b">
-                  <th className="pb-2">Product</th>
-                  <th className="pb-2">Category</th>
-                  <th className="pb-2 text-right">Price</th>
-                  <th className="pb-2 text-right">Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockProducts.map((product) => (
-                  <tr key={product.id} className="border-b">
-                    <td className="py-2">{product.name}</td>
-                    <td className="py-2">{product.category}</td>
-                    <td className="py-2 text-right">{formatCurrency(product.price)}</td>
-                    <td className="py-2 text-right">{product.stock}</td>
+          <div>
+            {/* Inventory Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{inventoryStats.totalProducts}</div>
+                  <p className="text-xs text-muted-foreground">Active inventory items</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
+                  <p className="text-xs text-muted-foreground">Based on selling prices</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">{inventoryStats.lowStockItems}</div>
+                  <p className="text-xs text-muted-foreground">Below minimum level</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{inventoryStats.outOfStockItems}</div>
+                  <p className="text-xs text-muted-foreground">Zero quantity items</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Potential Profit */}
+            <div className="mb-6 p-4 bg-muted rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Potential Profit (if all sold):</span>
+                <span className="text-xl font-bold text-green-600">{formatCurrency(potentialProfit)}</span>
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Based on current inventory levels and selling prices
+              </div>
+            </div>
+            
+            {/* Inventory Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b">
+                    <th className="pb-2">Product</th>
+                    <th className="pb-2">SKU</th>
+                    <th className="pb-2">Category</th>
+                    <th className="pb-2">Current Stock</th>
+                    <th className="pb-2">Min Stock</th>
+                    <th className="pb-2 text-right">Cost Price</th>
+                    <th className="pb-2 text-right">Selling Price</th>
+                    <th className="pb-2 text-right">Total Value</th>
+                    <th className="pb-2">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {products.map((product) => {
+                    const isLowStock = product.stock_quantity <= (product.min_stock_level || 10);
+                    const isOutOfStock = product.stock_quantity === 0;
+                    const totalValue = product.selling_price * product.stock_quantity;
+                    
+                    return (
+                      <tr key={product.id} className="border-b">
+                        <td className="py-2">
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">{product.barcode || 'No barcode'}</div>
+                        </td>
+                        <td className="py-2">{product.sku || 'N/A'}</td>
+                        <td className="py-2">{product.category_id || 'N/A'}</td>
+                        <td className="py-2">
+                          <span className={`font-medium ${
+                            isOutOfStock ? 'text-red-600' : 
+                            isLowStock ? 'text-yellow-600' : 
+                            'text-green-600'
+                          }`}>
+                            {product.stock_quantity} {product.unit_of_measure || 'pieces'}
+                          </span>
+                        </td>
+                        <td className="py-2">{product.min_stock_level || 0}</td>
+                        <td className="py-2 text-right">{formatCurrency(product.cost_price)}</td>
+                        <td className="py-2 text-right">{formatCurrency(product.selling_price)}</td>
+                        <td className="py-2 text-right font-medium">{formatCurrency(totalValue)}</td>
+                        <td className="py-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            product.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {product.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         );
       
