@@ -2,7 +2,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Download, Printer, Edit } from "lucide-react";
+import { Search, FileText, Download, Printer, Edit, Calendar } from "lucide-react";
 import { SavedInvoicesCard } from "./SavedInvoicesCard";
 import { getSavedInvoices, deleteInvoice, InvoiceData, updateInvoice } from "@/utils/invoiceUtils";
 import { PrintUtils } from "@/utils/printUtils";
@@ -37,6 +37,7 @@ interface SavedInvoicesSectionProps {
 export const SavedInvoicesSection = ({ onBack, onLogout, username }: SavedInvoicesSectionProps) => {
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateSearchTerm, setDateSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [viewingInvoice, setViewingInvoice] = useState<InvoiceData | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<InvoiceData | null>(null);
@@ -68,12 +69,36 @@ export const SavedInvoicesSection = ({ onBack, onLogout, username }: SavedInvoic
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Filter invoices based on search term
-  const filteredInvoices = invoices.filter(invoice => 
-    invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter invoices based on search term and date
+  const filteredInvoices = invoices.filter(invoice => {
+    // Text search (invoice number, customer, ID)
+    const matchesText = 
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Date search
+    let matchesDate = true;
+    if (dateSearchTerm) {
+      try {
+        // Parse the invoice date
+        const invoiceDate = new Date(invoice.date);
+        // Parse the search date (supporting various formats)
+        const searchDate = new Date(dateSearchTerm);
+        
+        // Check if dates match (same day)
+        matchesDate = 
+          invoiceDate.getDate() === searchDate.getDate() &&
+          invoiceDate.getMonth() === searchDate.getMonth() &&
+          invoiceDate.getFullYear() === searchDate.getFullYear();
+      } catch (error) {
+        // If date parsing fails, don't filter by date
+        matchesDate = true;
+      }
+    }
+    
+    return matchesText && matchesDate;
+  });
 
   const handleDeleteInvoice = (invoiceId: string) => {
     try {
@@ -621,14 +646,24 @@ export const SavedInvoicesSection = ({ onBack, onLogout, username }: SavedInvoic
                     View and manage your saved invoices from completed transactions
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search invoices by number, customer..."
+                      placeholder="Search by invoice number, customer name..."
                       className="pl-10 py-5 text-responsive-base w-64"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      placeholder="Search by date..."
+                      className="pl-10 py-5 text-responsive-base w-48"
+                      value={dateSearchTerm}
+                      onChange={(e) => setDateSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
@@ -644,7 +679,7 @@ export const SavedInvoicesSection = ({ onBack, onLogout, username }: SavedInvoic
                 <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Saved Invoices</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm ? "No invoices match your search." : "You haven't saved any invoices yet."}
+                  {searchTerm || dateSearchTerm ? "No invoices match your search criteria." : "You haven't saved any invoices yet."}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Invoices are automatically saved when you complete a transaction in the Sales Terminal.
