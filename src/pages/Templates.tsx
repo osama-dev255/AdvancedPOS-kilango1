@@ -37,7 +37,8 @@ import {
   RotateCcw,
   HandCoins,
   CreditCard,
-  FolderOpen
+  FolderOpen,
+  ShoppingCart
 } from "lucide-react";
 import { getTemplateConfig, saveTemplateConfig, ReceiptTemplateConfig } from '@/utils/templateUtils';
 import { PrintUtils } from '@/utils/printUtils';
@@ -58,7 +59,7 @@ import { getProducts, Product, getOutlets, Outlet, incrementProductStock, decrem
 interface Template {
   id: string;
   name: string;
-  type: "delivery-note" | "order-form" | "contract" | "invoice" | "receipt" | "notice" | "quotation" | "report" | "salary-slip" | "complimentary-goods" | "expense-voucher" | "customer-settlement" | "supplier-settlement" | "goods-received-note" | "purchase-order";
+  type: "delivery-note" | "order-form" | "contract" | "invoice" | "receipt" | "notice" | "quotation" | "report" | "salary-slip" | "complimentary-goods" | "expense-voucher" | "customer-settlement" | "supplier-settlement" | "goods-received-note" | "purchase-order" | "sales-order";
   description: string;
   content: string;
   lastModified: string;
@@ -164,6 +165,44 @@ const initialDeliveryNoteData: DeliveryNoteData = {
   amountDue: 3250
 };
 
+// Initial sales order data
+const initialSalesOrderData: SalesOrderData = {
+  orderNumber: "SO-001",
+  date: new Date().toISOString().split('T')[0],
+  salesRep: "Sales Representative Name",
+  businessName: "KILANGO INVESTMENT LTD",
+  businessAddress: "123 Business Street, City, Country",
+  businessPhone: "+1234567890",
+  businessEmail: "info@yourbusiness.com",
+  customerName: "Customer Name",
+  customerAddress: "Customer Address Line 1\nCustomer Address Line 2",
+  customerPhone: "+1234567890",
+  customerEmail: "customer@example.com",
+  orderDate: new Date().toISOString().split('T')[0],
+  requiredBy: "",
+  paymentTerms: "Net 30",
+  shippingMethod: "Standard Delivery",
+  items: [
+    { id: "1", description: "Sample Product 1", quantity: 10, unit: "pcs", unitPrice: 100, total: 1000 },
+    { id: "2", description: "Sample Product 2", quantity: 5, unit: "boxes", unitPrice: 250, total: 1250 },
+    { id: "3", description: "Sample Product 3", quantity: 2, unit: "units", unitPrice: 500, total: 1000 }
+  ],
+  subtotal: 3250,
+  discount: 0,
+  taxRate: 0,
+  taxAmount: 0,
+  shippingCost: 0,
+  total: 3250,
+  specialInstructions: "Please handle with care. Fragile items included.",
+  customerSignature: "",
+  signatureDate: "",
+  customerPrintName: "",
+  salesRepSignature: "",
+  authDate: "",
+  managerApproval: "",
+  approvalDate: ""
+};
+
 // Purchase Order Item interface with unit field
 interface PurchaseOrderItem {
   id: string;
@@ -172,6 +211,49 @@ interface PurchaseOrderItem {
   unit: string;
   unitPrice: number;
   total: number;
+}
+
+// Sales Order interfaces
+interface SalesOrderItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  total: number;
+}
+
+interface SalesOrderData {
+  orderNumber: string;
+  date: string;
+  salesRep: string;
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  businessEmail: string;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  orderDate: string;
+  requiredBy: string;
+  paymentTerms: string;
+  shippingMethod: string;
+  items: SalesOrderItem[];
+  subtotal: number;
+  discount: number;
+  taxRate: number;
+  taxAmount: number;
+  shippingCost: number;
+  total: number;
+  specialInstructions: string;
+  customerSignature: string;
+  signatureDate: string;
+  customerPrintName: string;
+  salesRepSignature: string;
+  authDate: string;
+  managerApproval: string;
+  approvalDate: string;
 }
 
 interface SavedPurchaseOrderData {
@@ -960,6 +1042,59 @@ Received By: [RECEIVED_BY]    Date: [RECEIVED_DATE]
 Thank you for your business!`,
       lastModified: "2023-08-15",
       isActive: false
+    },
+    {
+      id: "15",
+      name: "Sales Order",
+      type: "sales-order",
+      description: "Professional sales order template for customer orders",
+      content: `SALES ORDER
+Order #[ORDER_NUMBER]
+Date: [DATE]
+Sales Rep: [SALES_REP]
+
+FROM:
+[BUSINESS_NAME]
+[BUSINESS_ADDRESS]
+Phone: [BUSINESS_PHONE]
+Email: [BUSINESS_EMAIL]
+
+TO:
+[CUSTOMER_NAME]
+[CUSTOMER_ADDRESS]
+Phone: [CUSTOMER_PHONE]
+Email: [CUSTOMER_EMAIL]
+
+ORDER DETAILS:
+Order Date: [ORDER_DATE]
+Required By: [REQUIRED_BY]
+Payment Terms: [PAYMENT_TERMS]
+Shipping Method: [SHIPPING_METHOD]
+
+ITEMS ORDERED:
+[ITEM_LIST]
+
+ORDER SUMMARY:
+Subtotal: [SUBTOTAL]
+Discount: [DISCOUNT]
+Tax ([TAX_RATE]%): [TAX_AMOUNT]
+Shipping: [SHIPPING_COST]
+TOTAL: [TOTAL]
+
+SPECIAL INSTRUCTIONS:
+[SPECIAL_INSTRUCTIONS]
+
+CUSTOMER ACKNOWLEDGMENT:
+I hereby confirm this order and agree to the terms and conditions.
+
+Customer Signature: _________________    Date: [SIGNATURE_DATE]
+Print Name: [CUSTOMER_PRINT_NAME]
+
+AUTHORIZED BY:
+Sales Representative: [SALES_REP]      Date: [AUTH_DATE]
+Manager Approval: _________________     Date: [APPROVAL_DATE]`,
+      lastModified: new Date().toISOString().split('T')[0],
+      isActive: true
     }
   ]);
   
@@ -1999,6 +2134,8 @@ Thank you for your business!`,
     requestedBy: "",
     approvedBy: ""
   });
+
+  const [salesOrderData, setSalesOrderData] = useState<SalesOrderData>(initialSalesOrderData);
   
   // Initialize invoice data with current date and time-based invoice number
   const initialInvoiceData: InvoiceData = {
@@ -2194,7 +2331,7 @@ Thank you for your business!`,
 
   const handlePreviewTemplate = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
-    if (template && (template.type === "delivery-note" || template.type === "order-form" || template.type === "invoice" || template.type === "expense-voucher" || template.type === "salary-slip" || template.type === "complimentary-goods" || template.type === "report" || template.type === "customer-settlement" || template.type === "supplier-settlement" || template.type === "goods-received-note")) {
+    if (template && (template.type === "delivery-note" || template.type === "order-form" || template.type === "invoice" || template.type === "expense-voucher" || template.type === "salary-slip" || template.type === "complimentary-goods" || template.type === "report" || template.type === "customer-settlement" || template.type === "supplier-settlement" || template.type === "goods-received-note" || template.type === "sales-order")) {
       setViewingTemplate(templateId);
       setActiveTab("preview");
     } else {
@@ -5326,6 +5463,67 @@ Thank you for your business!`,
     return { subtotal, tax, total };
   };
   
+  // Handle sales order data changes
+  const handleSalesOrderChange = (field: keyof SalesOrderData, value: string | number) => {
+    setSalesOrderData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle sales order item changes
+  const handleSalesOrderItemChange = (itemId: string, field: keyof SalesOrderItem | 'unit', value: string | number) => {
+    setSalesOrderData(prev => ({
+      ...prev,
+      items: prev.items.map(item => 
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  // Add new sales order item
+  const handleAddSalesOrderItem = () => {
+    setSalesOrderData(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: Date.now().toString(),
+          description: "",
+          quantity: 1,
+          unit: "EA",
+          unitPrice: 0,
+          total: 0
+        }
+      ]
+    }));
+  };
+
+  // Remove sales order item
+  const handleRemoveSalesOrderItem = (itemId: string) => {
+    setSalesOrderData(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== itemId)
+    }));
+  };
+
+  // Calculate sales order totals
+  const calculateSalesOrderTotals = () => {
+    const subtotal = salesOrderData.items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    const taxAmount = subtotal * (Number(salesOrderData.taxRate) / 100);
+    const total = subtotal - Number(salesOrderData.discount) + taxAmount + Number(salesOrderData.shippingCost);
+    
+    // Update the state with calculated totals
+    setSalesOrderData(prev => ({
+      ...prev,
+      subtotal,
+      taxAmount,
+      total
+    }));
+    
+    return { subtotal, taxAmount, total };
+  };
+  
   // Handle invoice data changes
   const handleInvoiceChange = (field: keyof InvoiceData, value: string | number) => {
     setInvoiceData(prev => {
@@ -6930,6 +7128,7 @@ Thank you for your business!`,
       case "expense-voucher": return <Wallet className="h-5 w-5" />;
       case "customer-settlement": return <HandCoins className="h-5 w-5" />;
       case "supplier-settlement": return <Truck className="h-5 w-5" />;
+      case "sales-order": return <ShoppingCart className="h-5 w-5" />;
       default: return <FileText className="h-5 w-5" />;
     }
   };
@@ -6977,7 +7176,9 @@ Thank you for your business!`,
                                 ? "Customer Settlement Preview"
                                 : currentTemplate?.type === "supplier-settlement" 
                                   ? "Supplier Settlement Preview"
-                                  : "Delivery Note Preview")
+                                  : currentTemplate?.type === "sales-order"
+                                    ? "Sales Order Preview"
+                                    : "Delivery Note Preview")
                   : viewingTemplate 
                     ? `Viewing Template: ${currentTemplate?.name || 'Template'}`
                     : selectedTemplate 
@@ -7588,6 +7789,11 @@ Thank you for your business!`,
                         <h2 className="text-2xl font-bold">PURCHASE ORDER</h2>
                         <p className="text-sm">Official Business Document</p>
                       </div>
+                    ) : currentTemplate?.type === "sales-order" ? (
+                      <div className="text-center border-b-2 border-gray-800 pb-2">
+                        <h2 className="text-2xl font-bold">SALES ORDER</h2>
+                        <p className="text-sm">Customer Order Confirmation</p>
+                      </div>
                     ) : (
                       <div className="text-center">
                         <h2 className="text-2xl font-bold">DELIVERY NOTE</h2>
@@ -7902,6 +8108,371 @@ Thank you for your business!`,
                                   className="text-xs p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black w-full"
                                 />
                               </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : currentTemplate?.type === "sales-order" ? (
+                      // Sales Order Content
+                      <div className="space-y-6">
+                        {/* Order Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div>
+                            <div className="font-bold mb-1">ORDER #</div>
+                            <Input
+                              value={salesOrderData.orderNumber}
+                              onChange={(e) => handleSalesOrderChange("orderNumber", e.target.value)}
+                              className="text-sm font-bold mb-4 p-1 h-8"
+                            />
+                            
+                            <div className="font-bold mb-1">FROM:</div>
+                            <Input
+                              value={salesOrderData.businessName}
+                              onChange={(e) => handleSalesOrderChange("businessName", e.target.value)}
+                              className="text-sm mb-1 p-1 h-8"
+                            />
+                            <Input
+                              value={salesOrderData.businessAddress}
+                              onChange={(e) => handleSalesOrderChange("businessAddress", e.target.value)}
+                              className="text-sm mb-1 p-1 h-8"
+                            />
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <span>Phone:</span>
+                              <Input
+                                value={salesOrderData.businessPhone}
+                                onChange={(e) => handleSalesOrderChange("businessPhone", e.target.value)}
+                                className="text-sm p-1 h-8 w-40 inline-block"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <span>Contact:</span>
+                              <Input
+                                value={salesOrderData.businessEmail}
+                                onChange={(e) => handleSalesOrderChange("businessEmail", e.target.value)}
+                                className="text-sm p-1 h-8 w-40 inline-block"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="font-bold mb-1">SALES REP:</div>
+                            <Input
+                              value={salesOrderData.salesRep}
+                              onChange={(e) => handleSalesOrderChange("salesRep", e.target.value)}
+                              className="text-sm mb-4 p-1 h-8"
+                            />
+                            
+                            <div className="font-bold mb-1">TO (Customer):</div>
+                            <Input
+                              value={salesOrderData.customerName}
+                              onChange={(e) => handleSalesOrderChange("customerName", e.target.value)}
+                              className="text-sm mb-1 p-1 h-8"
+                            />
+                            <Input
+                              value={salesOrderData.customerAddress}
+                              onChange={(e) => handleSalesOrderChange("customerAddress", e.target.value)}
+                              className="text-sm mb-1 p-1 h-8"
+                            />
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <span>Phone:</span>
+                              <Input
+                                value={salesOrderData.customerPhone}
+                                onChange={(e) => handleSalesOrderChange("customerPhone", e.target.value)}
+                                className="text-sm p-1 h-8 w-40 inline-block"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <span>Contact:</span>
+                              <Input
+                                value={salesOrderData.customerEmail}
+                                onChange={(e) => handleSalesOrderChange("customerEmail", e.target.value)}
+                                className="text-sm p-1 h-8 w-40 inline-block"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Document Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div>
+                            <div className="text-sm font-medium">DATE</div>
+                            <Input
+                              type="date"
+                              value={salesOrderData.date}
+                              onChange={(e) => handleSalesOrderChange("date", e.target.value)}
+                              className="text-sm p-1 h-8"
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">ORDER DATE</div>
+                            <Input
+                              type="date"
+                              value={salesOrderData.orderDate}
+                              onChange={(e) => handleSalesOrderChange("orderDate", e.target.value)}
+                              className="text-sm p-1 h-8"
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">REQUIRED BY</div>
+                            <Input
+                              type="date"
+                              value={salesOrderData.requiredBy}
+                              onChange={(e) => handleSalesOrderChange("requiredBy", e.target.value)}
+                              className="text-sm p-1 h-8"
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">PAYMENT TERMS</div>
+                            <Input
+                              value={salesOrderData.paymentTerms}
+                              onChange={(e) => handleSalesOrderChange("paymentTerms", e.target.value)}
+                              className="text-sm p-1 h-8"
+                              placeholder="Net 30, etc."
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm font-medium">SHIPPING METHOD</div>
+                            <Input
+                              value={salesOrderData.shippingMethod}
+                              onChange={(e) => handleSalesOrderChange("shippingMethod", e.target.value)}
+                              className="text-sm p-1 h-8"
+                              placeholder="Standard Delivery"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Items Table */}
+                        <div>
+                          <div className="font-bold mb-2">ITEMS ORDERED:</div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse border border-gray-300 text-sm">
+                              <thead>
+                                <tr className="bg-gray-100">
+                                  <th className="border border-gray-300 p-2 text-left">Item #</th>
+                                  <th className="border border-gray-300 p-2 text-left">Description</th>
+                                  <th className="border border-gray-300 p-2 text-left">Qty</th>
+                                  <th className="border border-gray-300 p-2 text-left">Unit</th>
+                                  <th className="border border-gray-300 p-2 text-left">Unit Price</th>
+                                  <th className="border border-gray-300 p-2 text-left">Total</th>
+                                  <th className="border border-gray-300 p-2 text-left">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {salesOrderData.items.map((item, index) => (
+                                  <tr key={item.id}>
+                                    <td className="border border-gray-300 p-2">
+                                      ITM-{String(index + 1).padStart(3, '0')}
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      <Input
+                                        value={item.description}
+                                        onChange={(e) => handleSalesOrderItemChange(item.id, 'description', e.target.value)}
+                                        className="p-1 h-8 text-sm"
+                                      />
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      <Input
+                                        type="number"
+                                        value={item.quantity}
+                                        onChange={(e) => {
+                                          const newQuantity = parseFloat(e.target.value);
+                                          handleSalesOrderItemChange(item.id, 'quantity', newQuantity);
+                                          // Update total when quantity changes
+                                          handleSalesOrderItemChange(item.id, 'total', newQuantity * item.unitPrice);
+                                          calculateSalesOrderTotals();
+                                        }}
+                                        className="p-1 h-8 text-sm"
+                                      />
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      <Input
+                                        value={item.unit}
+                                        onChange={(e) => handleSalesOrderItemChange(item.id, 'unit', e.target.value)}
+                                        className="p-1 h-8 text-sm"
+                                      />
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={item.unitPrice}
+                                        onChange={(e) => {
+                                          const newPrice = parseFloat(e.target.value);
+                                          handleSalesOrderItemChange(item.id, 'unitPrice', newPrice);
+                                          // Update total when unit price changes
+                                          handleSalesOrderItemChange(item.id, 'total', item.quantity * newPrice);
+                                          calculateSalesOrderTotals();
+                                        }}
+                                        className="p-1 h-8 text-sm"
+                                      />
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      {formatCurrency(item.total)}
+                                    </td>
+                                    <td className="border border-gray-300 p-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveSalesOrderItem(item.id)}
+                                        className="p-1 h-8"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <Button 
+                            onClick={handleAddSalesOrderItem}
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Item
+                          </Button>
+                        </div>
+                        
+                        {/* Financial Summary */}
+                        <div className="grid grid-cols-1 gap-2 max-w-xs ml-auto">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-bold">SUBTOTAL</span>
+                            <span>{formatCurrency(salesOrderData.subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-bold">DISCOUNT</span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={salesOrderData.discount}
+                              onChange={(e) => {
+                                handleSalesOrderChange("discount", parseFloat(e.target.value) || 0);
+                                calculateSalesOrderTotals();
+                              }}
+                              className="w-24 inline-block p-1 h-8 text-right text-sm"
+                            />
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-bold">TAX ({salesOrderData.taxRate}%)</span>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={salesOrderData.taxRate}
+                                onChange={(e) => {
+                                  handleSalesOrderChange("taxRate", parseFloat(e.target.value) || 0);
+                                  calculateSalesOrderTotals();
+                                }}
+                                className="w-16 p-1 h-8 text-right text-sm"
+                              />
+                              <span>{formatCurrency(salesOrderData.taxAmount)}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-bold">SHIPPING</span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={salesOrderData.shippingCost}
+                              onChange={(e) => {
+                                handleSalesOrderChange("shippingCost", parseFloat(e.target.value) || 0);
+                                calculateSalesOrderTotals();
+                              }}
+                              className="w-24 inline-block p-1 h-8 text-right text-sm"
+                            />
+                          </div>
+                          <div className="flex justify-between text-sm pt-2 border-t border-gray-300">
+                            <span className="font-bold">TOTAL</span>
+                            <span className="font-bold">{formatCurrency(salesOrderData.total)}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Special Instructions */}
+                        <div>
+                          <div className="font-bold mb-2">SPECIAL INSTRUCTIONS:</div>
+                          <textarea
+                            value={salesOrderData.specialInstructions}
+                            onChange={(e) => handleSalesOrderChange("specialInstructions", e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded text-sm h-20"
+                            placeholder="Enter any special instructions for this order..."
+                          />
+                        </div>
+                        
+                        {/* Signatures Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
+                          <div>
+                            <div className="font-bold mb-2">CUSTOMER ACKNOWLEDGMENT:</div>
+                            <div className="text-sm mb-2">
+                              I hereby confirm this order and agree to the terms and conditions.
+                            </div>
+                            <div className="border-t border-gray-400 pt-8 mt-4">
+                              <div className="text-sm mb-1">Customer Signature:</div>
+                              <Input
+                                value={salesOrderData.customerSignature}
+                                onChange={(e) => handleSalesOrderChange("customerSignature", e.target.value)}
+                                className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black"
+                                placeholder="Signature"
+                              />
+                              <div className="flex justify-between text-sm mt-2">
+                                <div>
+                                  <div className="mb-1">Date:</div>
+                                  <Input
+                                    type="date"
+                                    value={salesOrderData.signatureDate}
+                                    onChange={(e) => handleSalesOrderChange("signatureDate", e.target.value)}
+                                    className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black w-full"
+                                  />
+                                </div>
+                                <div>
+                                  <div className="mb-1">Print Name:</div>
+                                  <Input
+                                    value={salesOrderData.customerPrintName}
+                                    onChange={(e) => handleSalesOrderChange("customerPrintName", e.target.value)}
+                                    className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black w-full"
+                                    placeholder="Full Name"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="font-bold mb-2">AUTHORIZED BY:</div>
+                            <div className="border-t border-gray-400 pt-8 mt-4">
+                              <div className="text-sm mb-1">Sales Representative:</div>
+                              <Input
+                                value={salesOrderData.salesRepSignature}
+                                onChange={(e) => handleSalesOrderChange("salesRepSignature", e.target.value)}
+                                className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black"
+                                placeholder="Signature"
+                              />
+                              <div className="text-sm mt-1 mb-1">Date:</div>
+                              <Input
+                                type="date"
+                                value={salesOrderData.authDate}
+                                onChange={(e) => handleSalesOrderChange("authDate", e.target.value)}
+                                className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black w-full"
+                              />
+                              
+                              <div className="text-sm mt-4 mb-1">Manager Approval:</div>
+                              <Input
+                                value={salesOrderData.managerApproval}
+                                onChange={(e) => handleSalesOrderChange("managerApproval", e.target.value)}
+                                className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black"
+                                placeholder="Signature"
+                              />
+                              <div className="text-sm mt-1 mb-1">Date:</div>
+                              <Input
+                                type="date"
+                                value={salesOrderData.approvalDate}
+                                onChange={(e) => handleSalesOrderChange("approvalDate", e.target.value)}
+                                className="text-sm p-1 h-8 border-b border-black rounded-none focus:ring-0 focus:border-black w-full"
+                              />
                             </div>
                           </div>
                         </div>
@@ -10754,6 +11325,7 @@ Thank you for your business!`,
                           <option value="expense-voucher">Expense Voucher</option>
                           <option value="customer-settlement">Customer Settlement</option>
                           <option value="supplier-settlement">Supplier Settlement</option>
+                          <option value="sales-order">Sales Order</option>
                         </select>
                       </div>
                     </div>
