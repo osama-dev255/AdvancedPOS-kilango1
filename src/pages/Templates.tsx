@@ -2254,6 +2254,15 @@ Thank you for your business!`,
         // For delivery notes, we don't have rates, so total is based on quantity
         const totalAmount = totalItems; // Just using quantity as a simple total
         
+        // Find the outlet ID if the customer is from registered outlets
+        let outletId: string | undefined;
+        if (isCustomerFromOutlets) {
+          const matchedOutlet = outlets.find(outlet => 
+            outlet.name.toLowerCase().trim() === deliveryNoteData.customerName.toLowerCase().trim()
+          );
+          outletId = matchedOutlet?.id;
+        }
+
         // Create delivery data for saving
         const deliveryToSave: DeliveryData = {
           id: deliveryNoteData.deliveryNoteNumber, // Use delivery note number as ID
@@ -2280,7 +2289,8 @@ Thank you for your business!`,
           change: deliveryNoteData.amountPaid ? deliveryNoteData.amountPaid - totalAmount : 0,
           vehicle: deliveryNoteData.vehicle,
           driver: deliveryNoteData.driver,
-          deliveryNotes: deliveryNoteData.deliveryNotes
+          deliveryNotes: deliveryNoteData.deliveryNotes,
+          outletId: outletId
         };
         
         await saveDelivery(deliveryToSave);
@@ -4356,19 +4366,25 @@ Thank you for your business!`,
     // Only validate against available stock when delivered field is changed, not when quantity is changed
     // Quantity field in delivery note is for planning purposes, validation should happen when delivered is set
     if (field === 'delivered') {
-      const item = deliveryNoteData.items.find(item => item.id === itemId);
-      if (item && item.description) {
-        const oldValue = item.delivered || 0;
-        const newValue = Number(value);
-        
-        // Only validate if the user is trying to increase the delivered quantity
-        if (newValue > oldValue) {
-          const quantityIncrease = newValue - oldValue;
-          const availability = await checkItemAvailability(item.description, quantityIncrease);
+      // Check if business name is "KILANGO INVESTMENT LTD" to handle stock validation
+      const shouldValidateStock = deliveryNoteData.businessName === "KILANGO INVESTMENT LTD";
+      
+      // Only validate stock availability for KILANGO INVESTMENT LTD
+      if (shouldValidateStock) {
+        const item = deliveryNoteData.items.find(item => item.id === itemId);
+        if (item && item.description) {
+          const oldValue = item.delivered || 0;
+          const newValue = Number(value);
           
-          if (!availability.available) {
-            alert(`Insufficient stock for "${item.description}". Need ${quantityIncrease} more, but only ${availability.availableQuantity} available in GRN: ${availability.grnNumber || 'N/A'}.`);
-            return; // Don't update the item
+          // Only validate if the user is trying to increase the delivered quantity
+          if (newValue > oldValue) {
+            const quantityIncrease = newValue - oldValue;
+            const availability = await checkItemAvailability(item.description, quantityIncrease);
+            
+            if (!availability.available) {
+              alert(`Insufficient stock for "${item.description}". Need ${quantityIncrease} more, but only ${availability.availableQuantity} available in GRN: ${availability.grnNumber || 'N/A'}.`);
+              return; // Don't update the item
+            }
           }
         }
       }
@@ -4527,6 +4543,15 @@ Thank you for your business!`,
         // Calculate total amount based on rates and quantities
         const totalAmount = deliveryNoteData.items.reduce((sum, item) => sum + (item.rate * item.delivered), 0);
         
+        // Find the outlet ID if the customer is from registered outlets
+        let outletId: string | undefined;
+        if (isCustomerFromOutlets) {
+          const matchedOutlet = outlets.find(outlet => 
+            outlet.name.toLowerCase().trim() === deliveryNoteData.customerName.toLowerCase().trim()
+          );
+          outletId = matchedOutlet?.id;
+        }
+
         // Create delivery data for saving
         const deliveryToSave: DeliveryData = {
           id: deliveryNoteData.deliveryNoteNumber, // Use delivery note number as ID
@@ -4555,7 +4580,8 @@ Thank you for your business!`,
           change: deliveryNoteData.amountPaid ? deliveryNoteData.amountPaid - totalAmount : 0,
           vehicle: deliveryNoteData.vehicle,
           driver: deliveryNoteData.driver,
-          deliveryNotes: deliveryNoteData.deliveryNotes
+          deliveryNotes: deliveryNoteData.deliveryNotes,
+          outletId: outletId
         };
         
         await saveDelivery(deliveryToSave);
@@ -5317,8 +5343,11 @@ Thank you for your business!`,
   
   // Handle invoice item changes
   const handleInvoiceItemChange = async (itemId: string, field: keyof InvoiceItem, value: string | number) => {
-    // If changing quantity, validate against available stock in GRN
-    if (field === 'quantity') {
+    // Check if business name is "KILANGO INVESTMENT LTD" to handle stock validation
+    const isKilangoInvestment = invoiceData.businessName === "KILANGO INVESTMENT LTD";
+    
+    // If changing quantity, validate against available stock in GRN only for KILANGO INVESTMENT LTD
+    if (field === 'quantity' && isKilangoInvestment) {
       const item = invoiceData.items.find(item => item.id === itemId);
       if (item && item.description) {
         const requestedQuantity = Number(value);
@@ -5332,7 +5361,7 @@ Thank you for your business!`,
     }
     
     // Check if business name is "KILANGO INVESTMENT LTD" to handle stock decrement
-    const isKilangoInvestment = invoiceData.businessName === "KILANGO INVESTMENT LTD";
+    // Variable isKilangoInvestment already declared earlier in the function
     
     setInvoiceData(prev => {
       const updatedItems = prev.items.map(item => {
@@ -5474,9 +5503,9 @@ Thank you for your business!`,
       
       products.forEach(product => {
         if (product.name) {
-          // Use the selling price as the rate and unit of measure as the unit
+          // Use the cost price as the rate and unit of measure as the unit
           itemsMap.set(product.name, { 
-            rate: product.selling_price || 0, 
+            rate: product.cost_price || 0, 
             unit: product.unit_of_measure || 'piece'
           });
         }
@@ -6443,12 +6472,17 @@ Thank you for your business!`,
         }
       }
       
-      // Update GRN quantities for consumed items
-      const consumedItems = invoiceData.items.map(item => ({
-        description: item.description,
-        quantity: item.quantity
-      }));
-      await updateGRNQuantitiesFromInvoice(consumedItems);
+      // Check if business name is "KILANGO INVESTMENT LTD" to handle inventory update
+      // Variable isKilangoInvestment already declared earlier in the function
+      
+      // Only update GRN quantities for consumed items if business name is "KILANGO INVESTMENT LTD"
+      if (isKilangoInvestment) {
+        const consumedItems = invoiceData.items.map(item => ({
+          description: item.description,
+          quantity: item.quantity
+        }));
+        await updateGRNQuantitiesFromInvoice(consumedItems);
+      }
       
       // Close the dialog and show success message
       setShowInvoiceOptions(false);

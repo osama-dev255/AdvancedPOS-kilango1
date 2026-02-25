@@ -55,6 +55,7 @@ import { SavedGRNsSection } from "@/components/SavedGRNsSection";
 import { SavedSupplierSettlementsSection } from "@/components/SavedSupplierSettlementsSection";
 import { GRNInventoryDashboard } from "@/pages/GRNInventoryDashboard";
 import { RegisteredOutlets } from "@/pages/RegisteredOutlets";
+import { OutletDetails } from "@/pages/OutletDetails";
 
 // Import missing components
 import { Navigation } from "@/components/Navigation";
@@ -108,6 +109,35 @@ export const Index = () => {
     
     fetchAssets();
   }, [currentView, user]);
+
+  // Effect to handle URL hash changes for routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1); // Remove '#' from the beginning
+      console.log("Hash changed to:", hash);
+      if (hash.startsWith('/outlet/')) {
+        // Extract outlet ID from the hash (e.g., #/outlet/abc123 -> abc123)
+        const outletId = hash.split('/')[2];
+        console.log("Extracted outlet ID:", outletId);
+        if (outletId) {
+          // Set a special view to handle outlet details with ID
+          console.log("Setting currentView to:", `outlet-details-${outletId}`);
+          setCurrentView(`outlet-details-${outletId}`);
+        }
+      }
+    };
+
+    // Listen for hashchange event
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Also check the current hash on mount
+    handleHashChange();
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   const handleLogin = async (credentials: { username: string; password: string }) => {
     const { username, password } = credentials;
@@ -1735,6 +1765,29 @@ export const Index = () => {
                 </AdvancedLayout>
               );
             default:
+              console.log("Current view is:", currentView);
+              // Check if this is an outlet details view (pattern: outlet-details-{id})
+              if (currentView.startsWith('outlet-details-')) {
+                const outletId = currentView.substring('outlet-details-'.length);
+                console.log("Rendering OutletDetails for outlet ID:", outletId);
+                return (
+                  <AdvancedLayout
+                    username={user?.email || "admin"}
+                    onLogout={handleLogout}
+                    currentView="registered-outlets" // Set the current view to registered-outlets to highlight the correct menu item
+                  >
+                    <OutletDetails 
+                      outletId={outletId}
+                      onBack={() => {
+                        // Navigate back to the registered outlets page
+                        setCurrentView("registered-outlets");
+                        window.location.hash = "#/registered-outlets";
+                      }} 
+                    />
+                  </AdvancedLayout>
+                );
+              }
+              
               console.log("Rendering default fallback for:", currentView);
               return (
                 <div className="min-h-screen flex items-center justify-center bg-background">

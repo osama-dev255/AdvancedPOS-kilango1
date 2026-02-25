@@ -62,6 +62,8 @@ interface DeliveryNoteItem {
   unit: string;
   delivered: number;
   remarks: string;
+  rate?: number;
+  amount?: number;
 }
 
 interface DeliveryNoteData {
@@ -91,6 +93,10 @@ interface DeliveryNoteData {
   receivedByName: string;
   receivedByDate: string;
   timestamp?: string;
+  subtotal?: number;
+  tax?: number;
+  discount?: number;
+  amountPaid?: number;
 }
 
 interface CustomerSettlementData {
@@ -105,10 +111,10 @@ interface CustomerSettlementData {
   previousBalance: number;
   amountPaid: number;
   newBalance: number;
-  notes: string;
+  notes?: string;
   date: string;
   time: string;
-  status: "completed" | "pending" | "cancelled";
+  status?: "completed" | "pending" | "cancelled";
 }
 
 interface SavedDeliveryNote {
@@ -1849,7 +1855,35 @@ We appreciate your business.`,
   };
 
   // Handle item changes
-  const handleItemChange = (itemId: string, field: keyof DeliveryNoteItem, value: string | number) => {
+  const handleItemChange = async (itemId: string, field: keyof DeliveryNoteItem, value: string | number) => {
+    // Only validate against available stock when delivered field is changed, not when quantity is changed
+    // Quantity field in delivery note is for planning purposes, validation should happen when delivered is set
+    if (field === 'delivered') {
+      // Check if business name is "KILANGO INVESTMENT LTD" to handle stock validation
+      const shouldValidateStock = deliveryNoteData.businessName === "KILANGO INVESTMENT LTD";
+      
+      // Only validate stock availability for KILANGO INVESTMENT LTD
+      if (shouldValidateStock) {
+        const item = deliveryNoteData.items.find(item => item.id === itemId);
+        if (item && item.description) {
+          const oldValue = item.delivered || 0;
+          const newValue = Number(value);
+          
+          // Only validate if the user is trying to increase the delivered quantity
+          if (newValue > oldValue) {
+            const quantityIncrease = newValue - oldValue;
+            const { checkItemAvailability } = await import('@/utils/consumptionUtils');
+            const availability = await checkItemAvailability(item.description, quantityIncrease);
+            
+            if (!availability.available) {
+              alert(`Insufficient stock for "${item.description}". Need ${quantityIncrease} more, but only ${availability.availableQuantity} available in GRN: ${availability.grnNumber || 'N/A'}.`);
+              return; // Don't update the item
+            }
+          }
+        }
+      }
+    }
+    
     setDeliveryNoteData(prev => ({
       ...prev,
       items: prev.items.map(item => 
@@ -4342,47 +4376,7 @@ We appreciate your business.`,
                   </div>
                 )}
                 
-                {/* Saved customer settlements section - only show when viewing saved settlements */}
-                {activeTab === "savedCustomerSettlements" && (
-                  <div className="border rounded-lg p-4 mb-6">
-                    <h4 className="font-bold mb-2">Saved Customer Settlements:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {savedCustomerSettlements.length > 0 ? (
-                        savedCustomerSettlements.map((settlement) => (
-                          <div key={settlement.id} className="flex items-center gap-2 bg-gray-100 rounded p-2">
-                            <span className="text-sm">{settlement.customerName} - {formatCurrency(settlement.settlementAmount)}</span>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleViewCustomerSettlement(settlement.id)}
-                              className="h-6 px-2"
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleLoadCustomerSettlement(settlement.id)}
-                              className="h-6 px-2"
-                            >
-                              Load
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDeleteSavedCustomerSettlement(settlement.id)}
-                              className="h-6 px-2"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No saved customer settlements yet.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
+
                 
                 <div className="border rounded-lg p-6 max-w-4xl mx-auto" id="template-preview-content">
                   <div className="space-y-6">

@@ -122,7 +122,7 @@ async function testGRNDashboard() {
     // Verify it can be read back
     const verifyData = localStorage.getItem(localStorageKey);
     const parsedData = verifyData ? JSON.parse(verifyData) : [];
-    const foundTestGRN = parsedData.find((item: any) => item.id === testGRN.id);
+    const foundTestGRN = parsedData.find((item) => item.id === testGRN.id);
     
     if (foundTestGRN) {
       console.log('✓ Data successfully retrieved from localStorage');
@@ -131,7 +131,7 @@ async function testGRNDashboard() {
     }
     
     // Clean up localStorage test data
-    const cleanedData = parsedData.filter((item: any) => item.id !== testGRN.id);
+    const cleanedData = parsedData.filter((item) => item.id !== testGRN.id);
     localStorage.setItem(localStorageKey, JSON.stringify(cleanedData));
     console.log('✓ localStorage test data cleaned up');
     

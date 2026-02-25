@@ -179,7 +179,8 @@ export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeli
         subtotal: calculatedSubtotal, // Use calculated subtotal (quantity * price)
         total: calculatedTotal,
         amountReceived: editingDelivery.amountReceived || 0,
-        change: editingDelivery.change || 0
+        change: editingDelivery.change || 0,
+        outletId: editingDelivery.outletId // Preserve the outlet ID
       };
       
       await updateDelivery(updatedDelivery);
@@ -301,7 +302,8 @@ export const SavedDeliveriesSection = ({ onBack, onLogout, username }: SavedDeli
                       change: delivery.change,
                       vehicle: delivery.vehicle,
                       driver: delivery.driver,
-                      status: delivery.status
+                      status: delivery.status,
+                      outletId: delivery.outletId
                     }}
                     onViewDetails={() => handleViewDelivery(delivery)}
                     onPrintDelivery={() => handlePrintDelivery(delivery)}

@@ -20,6 +20,7 @@ export interface DeliveryData {
   vehicle?: string;
   driver?: string;
   deliveryNotes?: string;
+  outletId?: string;
 }
 
 export const saveDelivery = async (delivery: DeliveryData): Promise<void> => {
@@ -51,7 +52,8 @@ export const saveDelivery = async (delivery: DeliveryData): Promise<void> => {
           change: delivery.change,
           vehicle: delivery.vehicle,
           driver: delivery.driver,
-          delivery_notes: delivery.deliveryNotes
+          delivery_notes: delivery.deliveryNotes,
+          outlet_id: delivery.outletId
         });
         
       if (error) {
@@ -101,7 +103,8 @@ export const getSavedDeliveries = async (): Promise<DeliveryData[]> => {
         change: dbDelivery.change,
         vehicle: dbDelivery.vehicle,
         driver: dbDelivery.driver,
-        deliveryNotes: dbDelivery.delivery_notes
+        deliveryNotes: dbDelivery.delivery_notes,
+        outletId: dbDelivery.outlet_id
       }));
     } else {
       // If not authenticated, use localStorage
@@ -169,7 +172,8 @@ export const updateDelivery = async (updatedDelivery: DeliveryData): Promise<voi
           change: updatedDelivery.change,
           vehicle: updatedDelivery.vehicle,
           driver: updatedDelivery.driver,
-          delivery_notes: updatedDelivery.deliveryNotes
+          delivery_notes: updatedDelivery.deliveryNotes,
+          outlet_id: updatedDelivery.outletId
         })
         .eq('user_id', user.id)
         .eq('id', updatedDelivery.id);

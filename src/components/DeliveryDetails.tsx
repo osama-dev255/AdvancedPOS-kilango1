@@ -168,6 +168,12 @@ export const DeliveryDetails = ({
                     <span className="text-muted-foreground">Name:</span>
                     <span>{delivery.customer}</span>
                   </div>
+                  {delivery.outletId && (
+                    <div className="flex justify-between bg-blue-50 p-2 rounded">
+                      <span className="text-blue-700 font-medium">Outlet:</span>
+                      <span className="text-blue-700">{delivery.customer}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Items:</span>
                     <span>{delivery.items}</span>

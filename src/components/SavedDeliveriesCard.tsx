@@ -19,6 +19,7 @@ interface SavedDelivery {
   vehicle: string;
   driver: string;
   status: "completed" | "in-transit" | "pending" | "delivered" | "cancelled";
+  outletId?: string;
 }
 
 interface SavedDeliveriesCardProps {
@@ -123,6 +124,13 @@ export const SavedDeliveriesCard = ({
             <span className="text-muted-foreground">Driver:</span>
             <span>{delivery.driver}</span>
           </div>
+          
+          {delivery.outletId && (
+            <div className="flex justify-between items-center text-sm bg-blue-50 p-2 rounded">
+              <span className="text-blue-700 font-medium">Outlet:</span>
+              <span className="text-blue-700">{delivery.customer}</span>
+            </div>
+          )}
           
           <div className="flex gap-2 pt-2">
             <Button 

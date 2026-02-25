@@ -14,7 +14,8 @@ import {
   Search,
   Edit,
   Trash2,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { getOutlets, createOutlet, updateOutlet, deleteOutlet, Outlet } from "@/services/databaseService";
@@ -26,6 +27,7 @@ export const RegisteredOutlets = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredOutlets, setFilteredOutlets] = useState<Outlet[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+
   const [newOutlet, setNewOutlet] = useState<Omit<Outlet, 'id' | 'created_at' | 'updated_at'>>({
     name: "",
     location: "",
@@ -133,6 +135,15 @@ export const RegisteredOutlets = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  const handleViewOutlet = (outlet: Outlet) => {
+    console.log("handleViewOutlet called with outlet:", outlet);
+    // Navigate to a specific outlet page
+    console.log("Setting window.location.hash to:", `#/outlet/${outlet.id}`);
+    window.location.hash = `#/outlet/${outlet.id}`;
+  };
+
+  // Removed outlet details modal functionality
 
   if (loading) {
     return (
@@ -270,7 +281,11 @@ export const RegisteredOutlets = () => {
               </thead>
               <tbody>
                 {filteredOutlets.map((outlet) => (
-                  <tr key={outlet.id} className="border-b hover:bg-muted/50">
+                  <tr 
+                    key={outlet.id} 
+                    className="border-b hover:bg-muted/50 cursor-pointer" 
+                    onClick={() => handleViewOutlet(outlet)}
+                  >
                     <td className="py-3 px-4">
                       <div className="font-medium">{outlet.name}</div>
                       <div className="text-sm text-muted-foreground">{outlet.phone}</div>
@@ -302,15 +317,25 @@ export const RegisteredOutlets = () => {
                         {outlet.status.charAt(0).toUpperCase() + outlet.status.slice(1)}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Add edit functionality here if needed
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => handleDeleteOutlet(outlet.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOutlet(outlet.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
