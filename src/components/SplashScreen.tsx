@@ -158,20 +158,7 @@ export const SplashScreen = () => {
         </div>
       </div>
 
-      {/* Business Nodes */}
-      {[...Array(15)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-2 h-2 bg-green-500 rounded-full opacity-40"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animation: `particle-drift ${4 + Math.random() * 3}s infinite linear`,
-            animationDelay: `${Math.random() * 2}s`,
-            boxShadow: '0 0 5px rgba(34, 197, 94, 0.5)'
-          }}
-        />
-      ))}
+
     </div>
   );
 };
