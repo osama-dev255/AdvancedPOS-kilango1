@@ -35,6 +35,7 @@ import { TaxManagement } from "@/pages/TaxManagement";
 import { TestPage } from "@/pages/TestPage";
 import { TestReceiptQR } from "@/pages/TestReceiptQR";
 import { SplashScreen } from "@/components/SplashScreen";
+import { ComprehensiveWelcome } from "@/components/ComprehensiveWelcome";
 import { AdvancedLayout } from "@/components/AdvancedLayout";
 
 // Import FinanceDashboard, IncomeStatement, AssetsManagement, and CapitalManagement
@@ -73,18 +74,19 @@ import { uploadFile } from '@/utils/fileUploadUtils';
 export const Index = () => {
   const [currentView, setCurrentView] = useState("splash");
   const [showSplash, setShowSplash] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [assets, setAssets] = useState<any[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const { user, login, logout } = useAuth();
 
-  // Show splash screen for 2 seconds
+  // Show splash screen for 2 seconds, then welcome screen for 6 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const splashTimer = setTimeout(() => {
       setShowSplash(false);
-      setCurrentView("login");
+      setShowWelcome(true);
     }, 2000);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(splashTimer);
   }, []);
 
   // Fetch assets when we navigate to asset-related views
@@ -200,6 +202,12 @@ export const Index = () => {
   const handleNavigate = (view: string) => {
     console.log("Index handleNavigate called with view:", view);
     setCurrentView(view);
+  };
+
+  const handleWelcomeContinue = () => {
+    console.log("Welcome screen completed, showing login");
+    setShowWelcome(false);
+    setCurrentView("login");
   };
 
   const handleBack = () => {
@@ -352,9 +360,13 @@ export const Index = () => {
     handleBack();
   };
 
-  // Show splash screen first, then login form
+  // Show splash screen first, then welcome screen, then login form
   if (showSplash) {
     return <SplashScreen />;
+  }
+
+  if (showWelcome) {
+    return <ComprehensiveWelcome onContinue={handleWelcomeContinue} username={user?.email} />;
   }
 
   console.log("Rendering Index, currentView:", currentView, "user:", user);

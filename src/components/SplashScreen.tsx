@@ -51,109 +51,88 @@ export const SplashScreen = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/30 flex items-center justify-center splash-screen overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden">
 
       
 
 
-      {/* Central Business Hub */}
-      <div className="relative z-20 text-center max-w-4xl px-4">
-        {/* Business Growth Animation */}
-        <div className="mb-10 relative flex justify-center">
-          <div className="relative w-72 h-72 flex items-center justify-center">
-            {/* Business ecosystem ring */}
-            <div className="absolute w-full h-full rounded-full bg-gradient-to-r from-green-500/10 via-blue-500/10 to-emerald-500/10 animate-spin-slower"></div>
-            
-            {/* Market expansion rings */}
-            <div className="absolute w-5/6 h-5/6 rounded-full border-2 border-green-400/30 animate-spin-slow"></div>
-            <div className="absolute w-4/6 h-4/6 rounded-full border-2 border-blue-400/30 animate-pulse-slow"></div>
-            <div className="absolute w-3/6 h-3/6 rounded-full border-2 border-emerald-400/30 animate-spin"></div>
-            
-            {/* Central business hub */}
-            <div className="relative w-32 h-32 flex items-center justify-center">
-              <div className="relative">
-                <Building className="h-20 w-20 text-green-600 animate-pulse" />
-                
-                {/* Market growth indicators */}
-                {[0, 1, 2, 3].map(i => (
-                  <div
-                    key={i}
-                    className="absolute w-2 h-2 bg-green-500 rounded-full"
-                    style={{
-                      transform: `rotate(${i * 90 + businessMetrics.growth}deg) translate(50px) rotate(${-i * 90 - businessMetrics.growth}deg)`,
-                      boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)'
-                    }}
-                  />
-                ))}
-                
-                {/* Global reach */}
-                <div className="absolute -inset-4 rounded-full border border-green-400/20 animate-pulse"></div>
+      {/* Dynamic geometric background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob"></div>
+        <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-emerald-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-rose-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-4xl px-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-blue-500/10 overflow-hidden">
+          {/* Form header with gradient strip */}
+          <div className="relative">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500"></div>
+            <div className="p-12 text-center">
+              <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-600/20 to-emerald-600/20 rounded-2xl backdrop-blur-sm border border-white/10 mb-8">
+                <Building className="h-16 w-16 text-blue-400" />
+              </div>
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
+                <span className="bg-gradient-to-r from-blue-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  KILANGO
+                </span>
+              </h1>
+              <p className="text-2xl text-slate-300 mb-10">
+                INVESTMENT LTD
+              </p>
+            </div>
+          </div>
+          
+          <div className="px-12 pb-12">
+            {/* Business Metrics Dashboard */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+              {[
+                { icon: DollarSign, label: "REVENUE", value: `$${Math.floor(businessMetrics.revenue).toLocaleString()}`, color: "text-emerald-400" },
+                { icon: Users, label: "CUSTOMERS", value: Math.floor(businessMetrics.customers).toLocaleString(), color: "text-blue-400" },
+                { icon: ShoppingCart, label: "ORDERS", value: Math.floor(businessMetrics.orders).toLocaleString(), color: "text-cyan-400" },
+                { icon: TrendingUp, label: "GROWTH", value: `${Math.floor(businessMetrics.growth)}%`, color: "text-amber-400" }
+              ].map((metric, index) => (
+                <div 
+                  key={index}
+                  className="bg-slate-700/50 backdrop-blur-sm border border-slate-600 rounded-xl p-5 transition-all duration-700 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <metric.icon className={`h-10 w-10 ${metric.color} mx-auto mb-3`} />
+                  <div className="text-xs text-slate-400 uppercase tracking-wider text-center">{metric.label}</div>
+                  <div className={`text-xl font-bold ${metric.color} text-center mt-1`}>{metric.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Business Performance Bar */}
+            <div className="relative w-full max-w-2xl mx-auto mb-10">
+              <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500 rounded-full transition-all duration-500"
+                  style={{ width: `${businessMetrics.growth}%` }}
+                ></div>
+              </div>
+              <div className="text-sm text-slate-400 mt-3 uppercase tracking-wider flex justify-between">
+                <span>BUSINESS PERFORMANCE</span>
+                <span>{Math.round(businessMetrics.growth)}%</span>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Business Branding */}
-        <div className="mb-8 relative">
-          <h1 className="text-7xl md:text-8xl lg:text-9xl font-black mb-4 relative">
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-blue-600 to-emerald-600 animate-text-shine">
-              KILANGO
-            </span>
-            <div className="absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-500 blur-xl opacity-20 animate-pulse"></div>
-          </h1>
-          <p className="text-2xl md:text-3xl text-slate-700/90 tracking-widest font-light">
-            INVESTMENT LTD
-          </p>
-        </div>
-
-        {/* Business Metrics Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {[
-            { icon: DollarSign, label: "REVENUE", value: `$${Math.floor(businessMetrics.revenue).toLocaleString()}`, color: "text-green-600" },
-            { icon: Users, label: "CUSTOMERS", value: Math.floor(businessMetrics.customers).toLocaleString(), color: "text-blue-600" },
-            { icon: ShoppingCart, label: "ORDERS", value: Math.floor(businessMetrics.orders).toLocaleString(), color: "text-purple-600" },
-            { icon: TrendingUp, label: "GROWTH", value: `${Math.floor(businessMetrics.growth)}%`, color: "text-amber-600" }
-          ].map((metric, index) => (
-            <div 
-              key={index}
-              className="bg-white/60 backdrop-blur-sm border border-green-500/30 rounded-xl p-4 transition-all duration-700 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-green-500/20"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <metric.icon className={`h-10 w-10 ${metric.color} mx-auto mb-2 animate-pulse`} />
-              <div className="text-xs text-slate-600/80 uppercase tracking-wider">{metric.label}</div>
-              <div className={`text-xl font-bold ${metric.color}`}>{metric.value}</div>
+            {/* Business Capabilities */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-slate-700/30 backdrop-blur-sm rounded-xl border border-slate-600">
+                <div className="text-2xl font-bold text-emerald-400 mb-2">500+</div>
+                <div className="text-sm text-slate-400">Active Businesses</div>
+              </div>
+              <div className="text-center p-4 bg-slate-700/30 backdrop-blur-sm rounded-xl border border-slate-600">
+                <div className="text-2xl font-bold text-blue-400 mb-2">99.9%</div>
+                <div className="text-sm text-slate-400">Uptime</div>
+              </div>
+              <div className="text-center p-4 bg-slate-700/30 backdrop-blur-sm rounded-xl border border-slate-600">
+                <div className="text-2xl font-bold text-cyan-400 mb-2">24/7</div>
+                <div className="text-sm text-slate-400">Support</div>
+              </div>
             </div>
-          ))}
-        </div>
-
-        {/* Business Performance Bar */}
-        <div className="relative w-full max-w-2xl mx-auto mb-8">
-          <div className="h-4 bg-slate-200 rounded-full overflow-hidden border border-green-500/30">
-            <div 
-              className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-              style={{ width: `${businessMetrics.growth}%` }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"></div>
-          </div>
-          <div className="text-sm text-slate-700/90 mt-2 uppercase tracking-wider flex justify-between">
-            <span>BUSINESS PERFORMANCE</span>
-            <span>{Math.round(businessMetrics.growth)}%</span>
-          </div>
-        </div>
-
-        {/* Business Capabilities */}
-        <div className="flex items-center justify-center space-x-10 text-slate-700/70">
-          <div className="flex items-center space-x-2">
-            <PieChart className="h-5 w-5 text-green-600" />
-            <span className="text-sm uppercase tracking-wider">ANALYTICS</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Globe className="h-5 w-5 text-blue-600" />
-            <span className="text-sm uppercase tracking-wider">GLOBAL REACH</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-purple-600" />
-            <span className="text-sm uppercase tracking-wider">REAL-TIME</span>
           </div>
         </div>
       </div>

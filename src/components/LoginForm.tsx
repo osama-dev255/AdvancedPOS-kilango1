@@ -125,207 +125,242 @@ export const LoginForm = ({ onLogin, onNavigate }: LoginFormProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen flex flex-col-reverse md:flex-row bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      {/* Dynamic geometric background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%]">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-primary/5"
-              style={{
-                width: Math.random() * 100 + 20,
-                height: Math.random() * 100 + 20,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -30, 0],
-                x: [0, Math.random() * 20 - 10, 0],
-              }}
-              transition={{
-                duration: Math.random() * 5 + 5,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob"></div>
+        <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-emerald-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-rose-500/10 rounded-full mix-blend-soft-light filter blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Left side - Business information panel */}
+      <div className="hidden md:flex md:w-2/5 items-center justify-center p-12 relative z-10">
+        <div className="text-center max-w-lg">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-10"
+          >
+            <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-600/20 to-emerald-600/20 rounded-2xl backdrop-blur-sm border border-white/10 mb-6">
+              <Building2 className="h-12 w-12 text-blue-400" />
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+              <span className="bg-gradient-to-r from-blue-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                Kilango Group
+              </span>
+            </h1>
+            <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+              Transform your business operations with our comprehensive POS solution
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid grid-cols-2 gap-6"
+          >
+            <div className="text-left p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+              <div className="text-2xl font-bold text-emerald-400">500+</div>
+              <div className="text-sm text-slate-400">Active Businesses</div>
+            </div>
+            <div className="text-left p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+              <div className="text-2xl font-bold text-blue-400">99.9%</div>
+              <div className="text-sm text-slate-400">Uptime</div>
+            </div>
+            <div className="text-left p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+              <div className="text-2xl font-bold text-rose-400">24/7</div>
+              <div className="text-sm text-slate-400">Support</div>
+            </div>
+            <div className="text-left p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+              <div className="text-2xl font-bold text-amber-400">10x</div>
+              <div className="text-sm text-slate-400">ROI</div>
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: isMounted ? 1 : 0, y: isMounted ? 0 : 20 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md z-10"
-      >
-        <Card className="shadow-xl border-0 bg-background/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-6 pt-8">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
-            >
-              <Building2 className="h-8 w-8 text-primary" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Kilango Group
-              </CardTitle>
-              <CardDescription className="text-base mt-2">
-                Sign in to access your business dashboard
-              </CardDescription>
-            </motion.div>
-          </CardHeader>
-          
-          <CardContent className="pb-8 px-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="space-y-2"
-              >
-                <Label htmlFor="email" className="text-base font-medium">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
-                    }}
-                    className={`pl-12 pr-4 py-6 text-base rounded-xl border-2 transition-all duration-200 ${
-                      errors.email ? "border-destructive" : "border-input focus:border-primary"
-                    }`}
-                    disabled={isLoading}
-                  />
-                </div>
-                {errors.email && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="text-destructive text-sm mt-1"
-                  >
-                    {errors.email}
-                  </motion.p>
-                )}
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="space-y-2"
-              >
-                <Label htmlFor="password" className="text-base font-medium">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
-                    }}
-                    className={`pl-12 pr-12 py-6 text-base rounded-xl border-2 transition-all duration-200 ${
-                      errors.password ? "border-destructive" : "border-input focus:border-primary"
-                    }`}
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    disabled={isLoading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="text-destructive text-sm mt-1"
-                  >
-                    {errors.password}
-                  </motion.p>
-                )}
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="flex items-center justify-between"
-              >
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                  disabled={isLoading}
+      {/* Right side - Login form */}
+      <div className="w-full md:w-3/5 flex items-center justify-center p-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-blue-500/10 overflow-hidden">
+            {/* Form header with gradient strip */}
+            <div className="relative">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500"></div>
+              <div className="p-8 text-center">
+                <motion.h2 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-2xl font-bold text-white mb-2"
                 >
-                  {isLoading ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
-                    />
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-              </motion.div>
-            </form>
-            
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="mt-8 pt-6 border-t border-muted"
-            >
-              <div className="text-center">
-                <p className="text-muted-foreground mb-4">
-                  Don't have an account? Create one to get started
-                </p>
-                <Button
-                  variant="outline"
-                  className="font-medium rounded-xl px-6 py-5 text-base border-2 hover:border-primary hover:bg-primary/5 transition-all duration-300"
-                  onClick={handleRegisterClick}
-                  disabled={isLoading}
+                  Welcome Back
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-slate-400"
                 >
-                  <User className="mr-2 h-5 w-5" />
-                  Sign Up
-                </Button>
+                  Sign in to access your business dashboard
+                </motion.p>
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-6 text-center"
-            >
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground text-sm">
-                © {new Date().getFullYear()} Kilango Group. All rights reserved.
-              </Button>
-            </motion.div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            <CardContent className="pb-8 px-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="space-y-2"
+                >
+                  <Label htmlFor="email" className="text-sm font-medium text-slate-300">Email Address</Label>
+                  <div className="relative group">
+                    <div className="absolute left-0 top-0 h-10 w-1 bg-gradient-to-b from-blue-500 to-emerald-500 rounded-r-full group-focus-within:opacity-100 opacity-0 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center">
+                      <Mail className="absolute left-4 h-5 w-5 text-slate-400 ml-1" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@company.com"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                        }}
+                        className={`pl-12 pr-4 py-4 text-base rounded-xl border border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300 ${errors.email ? "border-red-500" : ""}`}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                  {errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="text-red-400 text-sm mt-1"
+                    >
+                      {errors.email}
+                    </motion.p>
+                  )}
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="space-y-2"
+                >
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-300">Password</Label>
+                  <div className="relative group">
+                    <div className="absolute left-0 top-0 h-10 w-1 bg-gradient-to-b from-blue-500 to-emerald-500 rounded-r-full group-focus-within:opacity-100 opacity-0 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center">
+                      <Lock className="absolute left-4 h-5 w-5 text-slate-400 ml-1" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
+                        }}
+                        className={`pl-12 pr-12 py-4 text-base rounded-xl border border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300 ${errors.password ? "border-red-500" : ""}`}
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 text-slate-400 hover:text-white transition-colors"
+                        disabled={isLoading}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {errors.password && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="text-red-400 text-sm mt-1"
+                    >
+                      {errors.password}
+                    </motion.p>
+                  )}
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="flex items-center justify-between"
+                >
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-medium rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </motion.div>
+              </form>
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="mt-6 pt-6 border-t border-slate-700"
+              >
+                <div className="text-center">
+                  <p className="text-slate-400 mb-4">
+                    Don't have an account?
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full font-medium rounded-xl px-6 py-5 text-base border-slate-600 text-white hover:bg-slate-700/50 hover:border-slate-500 transition-all duration-300"
+                    onClick={handleRegisterClick}
+                    disabled={isLoading}
+                  >
+                    <User className="mr-2 h-5 w-5" />
+                    Create Account
+                  </Button>
+                </div>
+              </motion.div>
+            </CardContent>
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="mt-6 text-center"
+          >
+            <p className="text-slate-500 text-sm">
+              © {new Date().getFullYear()} Kilango Group. All rights reserved.
+            </p>
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };
