@@ -255,17 +255,16 @@ export const SavedInvoicesCard = ({
                 <Download className="h-4 w-4 mr-1" />
                 Download
               </Button>
-              {userRole === 'admin' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => setShowDeleteConfirmation(true)}
-                  title="Delete Invoice"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="flex-1"
+                onClick={() => setShowDeleteConfirmation(true)}
+                title="Delete Invoice"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
             </div>
           </div>
         </CardContent>
